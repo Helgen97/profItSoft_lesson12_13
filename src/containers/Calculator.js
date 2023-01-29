@@ -21,13 +21,31 @@ class Calculator extends React.Component {
         }
     }
 
-    calculate(expresion) {
-        try {
-            // eslint-disable-next-line
-            return eval(expresion);
+    calculate(expression = "") {
+        let expressionParameters = expression.split(" ");
+        
+        let firstNumber = Number(expressionParameters[0]);
+        let secondNumber = Number(expressionParameters[2]);
+        let operator = expressionParameters[1];
 
-        } catch (error) {
-            console.error(error);
+        if(secondNumber === 0) return "Error division by zero";
+
+        switch(operator){
+            case "+" : {
+                return firstNumber + secondNumber;
+            }
+            case "-" : {
+                return firstNumber - secondNumber;
+            }
+            case "*" : {
+                return firstNumber * secondNumber;
+            }
+            case "/" : {
+                return firstNumber / secondNumber;
+            }
+            default : {
+                return "Couldn't evaluate result";
+            }
         }
     }
 
