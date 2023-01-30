@@ -21,88 +21,119 @@ class Calculator extends React.Component {
         }
     }
 
-    calculate(expression = "") {
+    calculate(expression) {
         let expressionParameters = expression.split(" ");
-        
+
         let firstNumber = Number(expressionParameters[0]);
         let secondNumber = Number(expressionParameters[2]);
         let operator = expressionParameters[1];
 
-        if(secondNumber === 0) return "Error division by zero";
+        if (secondNumber === 0) return "Error division by zero";
 
-        switch(operator){
-            case "+" : {
+        switch (operator) {
+            case "+": {
                 return firstNumber + secondNumber;
             }
-            case "-" : {
+            case "-": {
                 return firstNumber - secondNumber;
             }
-            case "*" : {
+            case "*": {
                 return firstNumber * secondNumber;
             }
-            case "/" : {
+            case "/": {
                 return firstNumber / secondNumber;
             }
-            default : {
+            default: {
                 return "Couldn't evaluate result";
             }
         }
     }
 
-    handleClick = (event) => {
-        let value = event.target.closest("button").value;
-        let { firstNumber, secondNumber, operator } = this.state;
-        let newOutput = this.state.output;
+    handleNumberClick(value) {
+        let { firstNumber, secondNumber, operator, output } = this.state;
 
-        if (value.match(/[\d.]/)) {
-
-            if (operator === "") {
-                this.setState({ firstNumber: firstNumber += value });
-            } else {
-                this.setState({ secondNumber: secondNumber += value });
-            }
-
-            newOutput += value;
-
-        } else if (value.match(/[+\-/*]/)) {
-            if (firstNumber === "") return;
-
-            if (operator === "") {
-                this.setState({ operator: value });
-                newOutput += " " + value + " ";
-            } else if (operator !== "" && secondNumber === "") {
-                this.setState({ operator: value });
-                newOutput = newOutput.replace(/[+\-/*]/, value);
-            } else if (secondNumber !== "") {
-
-                let expression = `${firstNumber} ${operator} ${secondNumber}`;
-                let result = this.calculate(expression);
-                newOutput = result + ` ${value} `;
-
-                this.setState({
-                    firstNumber: result,
-                    secondNumber: "",
-                    operator: value,
-                    history: [...this.state.history, expression + ` = ${result}`]
-                });
-            }
-
+        if (operator === "") {
+            return {
+                firstNumber: firstNumber += value,
+                output: output += value
+            };
         } else {
-            if (firstNumber === "" || operator === "" || secondNumber === "") return;
+            return {
+                secondNumber: secondNumber += value,
+                output: output += value
+            };
+        }
+    }
+
+    handleOperatorClick(value) {
+        let { firstNumber, secondNumber, operator, history, output } = this.state;
+
+        if (operator === "") {
+
+            return {
+                operator: value,
+                output: output += " " + value + " "
+            }
+
+        } else if (operator !== "" && secondNumber === "") {
+
+            return {
+                operator: value,
+                output: output.replace(/(?![+\-/*]\d\s)[+\-/*]/, value)
+            }
+
+        } else if (secondNumber !== "") {
 
             let expression = `${firstNumber} ${operator} ${secondNumber}`;
             let result = this.calculate(expression);
 
-            newOutput = result;
-            this.setState({
+            return {
+                output: result + ` ${value} `,
                 firstNumber: result,
                 secondNumber: "",
-                operator: "",
-                history: [...this.state.history, expression + ` = ${result}`]
-            })
+                operator: value,
+                history: [...history, expression + ` = ${result}`]
+            }
+
+        }
+    }
+
+    handleEvaluateClick() {
+        let { firstNumber, secondNumber, operator, history } = this.state;
+        let expression = `${firstNumber} ${operator} ${secondNumber}`;
+        let result = this.calculate(expression);
+
+        return {
+            output: result,
+            firstNumber: result,
+            secondNumber: "",
+            operator: "",
+            history: [...history, expression + ` = ${result}`]
         }
 
-        this.setState({ output: newOutput })
+    }
+
+    handleClick = (event) => {
+        let value = event.target.closest("button").value;
+        let { firstNumber, secondNumber, operator } = this.state;
+        let newState = {};
+
+        if (value.match(/[\d.]/)) {
+
+            newState = this.handleNumberClick(value);
+
+        } else if (value.match(/[+\-/*]/)) {
+
+            if (firstNumber === "") return;
+            newState = this.handleOperatorClick(value);
+
+        } else {
+
+            if (firstNumber === "" || operator === "" || secondNumber === "") return;
+            newState = this.handleEvaluateClick();
+        }
+
+        this.setState(newState);
     }
 
     componentDidUpdate() {
@@ -115,7 +146,6 @@ class Calculator extends React.Component {
                 this.setState({ history: [...history, newExample] })
             }
         })
-
     }
 
     render() {
@@ -162,8 +192,8 @@ class Calculator extends React.Component {
                         />)
                     )}
                     {examples.isLoading &&
-                        <Grid item xs={12} style={{textAlign:"center"}}>
-                            <CircularProgress size={30}/>
+                        <Grid item xs={12} style={{ textAlign: "center" }}>
+                            <CircularProgress size={30} />
                         </Grid>}
                     {!examples.isLoading &&
                         <GridButton
